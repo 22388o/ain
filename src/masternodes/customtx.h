@@ -86,7 +86,11 @@ enum CustomTxType : uint8_t
     WithdrawFromVault       = 'J',
     TakeLoan                = 'X',
     PaybackLoan             = 'H',
-    AuctionBid              = 'I'
+    AuctionBid              = 'I',
+
+    // On-Chain-Gov
+    CreateCfp               = 'P',
+    Vote                    = 'O',
 };
 
 extern const std::vector<unsigned char> DfTxMarker;

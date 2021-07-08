@@ -11,6 +11,7 @@
 #include <masternodes/consensus/masternodes.h>
 #include <masternodes/consensus/oracles.h>
 #include <masternodes/consensus/poolpairs.h>
+#include <masternodes/consensus/proposals.h>
 #include <masternodes/consensus/smartcontracts.h>
 #include <masternodes/consensus/tokens.h>
 #include <masternodes/consensus/vaults.h>
@@ -80,6 +81,8 @@ CCustomTxMessage customTypeToMessage(CustomTxType txType) {
         case CustomTxType::TakeLoan:                return CLoanTakeLoanMessage{};
         case CustomTxType::PaybackLoan:             return CLoanPaybackLoanMessage{};
         case CustomTxType::AuctionBid:              return CAuctionBidMessage{};
+        case CustomTxType::CreateCfp:               return CCreatePropMessage{};
+        case CustomTxType::Vote:                    return CPropVoteMessage{};
         case CustomTxType::Reject:                  return CCustomTxMessageNone{};
         case CustomTxType::None:                    return CCustomTxMessageNone{};
     }
@@ -114,6 +117,7 @@ class CCustomMetadataParseVisitor
             { consensus.EunosPayaHeight,        "called before EunosPaya height" },
             { consensus.FortCanningHeight,      "called before FortCanning height" },
             { consensus.FortCanningHillHeight,  "called before FortCanningHill height" },
+            { consensus.GreatWorldHeight,       "called before GreatWorld height" },
         };
         if (startHeight && int(height) < startHeight) {
             auto it = hardforks.find(startHeight);
@@ -190,6 +194,10 @@ public:
         if constexpr (IsOneOf<T, CSmartContractMessage>())
             return IsHardforkEnabled(consensus.FortCanningHillHeight);
         else
+        if constexpr (IsOneOf<T, CCreatePropMessage,
+                                 CPropVoteMessage>())
+            return IsHardforkEnabled(consensus.GreatWorldHeight);
+        else
         if constexpr (IsOneOf<T, CCreateMasterNodeMessage,
                                  CResignMasterNodeMessage>())
             return Res::Ok();
@@ -265,7 +273,8 @@ public:
                                    CPoolPairsConsensus,
                                    CSmartContractsConsensus,
                                    CTokensConsensus,
-                                   CVaultsConsensus
+                                   CVaultsConsensus,
+                                   CProposalsConsensus
                                 >(obj);
     }
 
@@ -410,7 +419,9 @@ Res ApplyCustomTx(CCustomCSView& mnview, const CCoinsViewCache& coins, const CTr
         res = CustomTxVisit(view, coins, tx, height, consensus, txMessage, time);
 
         // Track burn fee
-        if (txType == CustomTxType::CreateToken || txType == CustomTxType::CreateMasternode) {
+        if (txType == CustomTxType::CreateToken
+        || txType == CustomTxType::CreateMasternode
+        || txType == CustomTxType::CreateCfp) {
             if (writers) {
                 writers->AddFeeBurn(tx.vout[0].scriptPubKey, tx.vout[0].nValue);
             }
