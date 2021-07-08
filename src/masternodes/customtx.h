@@ -91,6 +91,7 @@ enum CustomTxType : uint8_t
     // On-Chain-Gov
     CreateCfp               = 'P',
     Vote                    = 'O',
+    CreateVoc               = 'E',
 };
 
 extern const std::vector<unsigned char> DfTxMarker;
