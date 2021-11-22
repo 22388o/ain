@@ -3360,7 +3360,7 @@ void CChainState::ProcessProposalEvents(const CBlockIndex* pindex, CCustomCSView
 
         uint32_t majorityThreshold;
         switch(prop.type) {
-        case CPropType::CommunityFundRequest:
+        case CPropType::CommunityFundProposal:
             majorityThreshold = chainparams.GetConsensus().props.cfp.majorityThreshold;
             break;
         case CPropType::BlockRewardReallocation:
@@ -3383,7 +3383,7 @@ void CChainState::ProcessProposalEvents(const CBlockIndex* pindex, CCustomCSView
             cache.UpdatePropCycle(propId, prop.cycle + 1);
         }
 
-        if (prop.type == CPropType::CommunityFundRequest) {
+        if (prop.type == CPropType::CommunityFundProposal) {
             auto res = cache.SubCommunityBalance(CommunityAccountType::CommunityDevFunds, prop.nAmount);
             if (res) {
                 cache.CalculateOwnerRewards(prop.address, pindex->nHeight);
