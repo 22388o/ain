@@ -63,11 +63,9 @@ Res CVaultsConsensus::operator()(const CCloseVaultMessage& obj) const {
     if (mnview.GetLoanTokens(obj.vaultId))
         return Res::Err("Vault <%s> has loans", obj.vaultId.GetHex());
 
-    CalculateOwnerRewards(obj.to);
-
     if (auto collaterals = mnview.GetVaultCollaterals(obj.vaultId)) {
         for (const auto& col : collaterals->balances) {
-            auto res = mnview.AddBalance(obj.to, {col.first, col.second});
+            auto res = mnview.AddBalancePlusRewards(obj.to, {col.first, col.second}, height);
             if (!res)
                 return res;
         }
@@ -80,7 +78,7 @@ Res CVaultsConsensus::operator()(const CCloseVaultMessage& obj) const {
 
     // return half fee, the rest is burned at creation
     auto feeBack = consensus.vaultCreationFee / 2;
-    res = mnview.AddBalance(obj.to, {DCT_ID{0}, feeBack});
+    res = mnview.AddBalancePlusRewards(obj.to, {DCT_ID{0}, feeBack}, height);
     return !res ? res : mnview.EraseVault(obj.vaultId);
 }
 
@@ -150,8 +148,7 @@ Res CVaultsConsensus::operator()(const CDepositToVaultMessage& obj) const {
         return Res::Err("Cannot deposit to vault under liquidation");
 
     //check balance
-    CalculateOwnerRewards(obj.from);
-    res = mnview.SubBalance(obj.from, obj.amount);
+    res = mnview.SubBalancePlusRewards(obj.from, obj.amount, height);
     if (!res)
         return Res::Err("Insufficient funds: can't subtract balance of %s: %s\n", ScriptToString(obj.from), res.msg);
 
@@ -191,17 +188,19 @@ Res CVaultsConsensus::operator()(const CWithdrawFromVaultMessage& obj) const {
     if (!res)
         return res;
 
-    if (!mnview.GetLoanTokens(obj.vaultId))
-        return mnview.AddBalance(obj.to, obj.amount);
+    if (mnview.GetLoanTokens(obj.vaultId)) {
+        auto collaterals = mnview.GetVaultCollaterals(obj.vaultId);
+        if (!collaterals)
+            return Res::Err("Cannot withdraw all collaterals as there are still active loans in this vault");
 
-    auto collaterals = mnview.GetVaultCollaterals(obj.vaultId);
-    if (!collaterals)
-        return Res::Err("Cannot withdraw all collaterals as there are still active loans in this vault");
+        LogPrint(BCLog::LOAN,"CWithdrawFromVaultMessage():\n");
+        auto scheme = mnview.GetLoanScheme(vault->schemeId);
+        res = CheckNextCollateralRatio(obj.vaultId, *scheme, *collaterals);
+        if (!res)
+            return res;
+    }
 
-    LogPrint(BCLog::LOAN,"CWithdrawFromVaultMessage():\n");
-    auto scheme = mnview.GetLoanScheme(vault->schemeId);
-    res = CheckNextCollateralRatio(obj.vaultId, *scheme, *collaterals);
-    return !res ? res : mnview.AddBalance(obj.to, obj.amount);
+    return mnview.AddBalanceNoRewards(obj.to, obj.amount);
 }
 
 Res CVaultsConsensus::operator()(const CAuctionBidMessage& obj) const {
@@ -253,11 +252,9 @@ Res CVaultsConsensus::operator()(const CAuctionBidMessage& obj) const {
             return Res::Err("Bid override should be higher than last one");
 
         // immediate refund previous bid
-        CalculateOwnerRewards(bid->first);
-        mnview.AddBalance(bid->first, bid->second);
+        mnview.AddBalancePlusRewards(bid->first, bid->second, height);
     }
     //check balance
-    CalculateOwnerRewards(obj.from);
-    res = mnview.SubBalance(obj.from, obj.amount);
+    res = mnview.SubBalancePlusRewards(obj.from, obj.amount, height);
     return !res ? res : mnview.StoreAuctionBid(obj.vaultId, obj.index, {obj.from, obj.amount});
 }
