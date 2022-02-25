@@ -347,6 +347,7 @@ public:
     void ForEachLoanToken(std::function<bool(const CVaultId&, const CBalances&)> callback);
 
     Res SetLoanLiquidationPenalty(CAmount penalty);
+    Res EraseLoanLiquidationPenalty();
     CAmount GetLoanLiquidationPenalty();
 
     struct LoanSetCollateralTokenCreationTx { static constexpr uint8_t prefix() { return 0x10; } };

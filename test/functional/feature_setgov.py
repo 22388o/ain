@@ -534,5 +534,26 @@ class GovsetTest (DefiTestFramework):
         assert_equal(attriutes['v0/token/5/dex_in_fee_pct'], '0.6')
         assert_equal(attriutes['v0/token/5/dex_out_fee_pct'], '0.12')
 
+        result = self.nodes[0].getgov('ORACLE_DEVIATION')
+        assert_equal(result['ORACLE_DEVIATION'], Decimal('0.07000000'))
+
+        result = self.nodes[0].getgov('LP_SPLITS')
+        assert_equal(result['LP_SPLITS'], {'1': Decimal('0.70000000'), '2': Decimal('0.20000000'), '3': Decimal('0.10000000')})
+
+        result = self.nodes[0].getgov('ATTRIBUTES')
+        assert_equal(result['ATTRIBUTES'], {'v0/params/dfip2201/active': 'true', 'v0/params/dfip2201/premium': '0.025', 'v0/params/dfip2201/minswap': '0.001', 'v0/token/5/payback_dfi': 'true', 'v0/token/5/payback_dfi_fee_pct': '0.01', 'v0/token/5/dex_in_fee_pct': '0.6', 'v0/token/5/dex_out_fee_pct': '0.12'})
+
+        self.nodes[0].unsetgov({'ORACLE_DEVIATION':'', 'LP_SPLITS':['1', '2'], 'ATTRIBUTES':['v0/params/dfip2201/active', 'v0/params/dfip2201/premium', 'v0/params/dfip2201/minswap', 'v0/token/5/payback_dfi_fee_pct', 'v0/token/5/dex_in_fee_pct', 'v0/token/5/dex_out_fee_pct']})
+        self.nodes[0].generate(1)
+
+        result = self.nodes[0].getgov('ORACLE_DEVIATION')
+        assert_equal(result['ORACLE_DEVIATION'], Decimal('0E-8'))
+
+        result = self.nodes[0].getgov('LP_SPLITS')
+        assert_equal(result['LP_SPLITS'], {'3': Decimal('0.10000000')})
+
+        result = self.nodes[0].getgov('ATTRIBUTES')
+        assert_equal(result['ATTRIBUTES'], {'v0/token/5/payback_dfi': 'true'})
+
 if __name__ == '__main__':
     GovsetTest ().main ()

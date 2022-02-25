@@ -32,6 +32,7 @@ CustomTxType CustomTxCodeToType(uint8_t ch) {
         case CustomTxType::AnyAccountsToAccounts:
         case CustomTxType::SmartContract:
         case CustomTxType::SetGovVariable:
+        case CustomTxType::UnsetGovVariable:
         case CustomTxType::SetGovVariableHeight:
         case CustomTxType::AutoAuthPrep:
         case CustomTxType::AppointOracle:
@@ -91,6 +92,7 @@ std::string ToString(CustomTxType type) {
         CustomTxTypeString(AnyAccountsToAccounts);
         CustomTxTypeString(SmartContract);
         CustomTxTypeString(SetGovVariable);
+        CustomTxTypeString(UnsetGovVariable);
         CustomTxTypeString(SetGovVariableHeight);
         CustomTxTypeString(AppointOracle);
         CustomTxTypeString(RemoveOracleAppoint);

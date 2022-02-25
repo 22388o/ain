@@ -15,7 +15,12 @@
 
 Res CGovView::SetVariable(GovVariable const & var)
 {
-    return WriteBy<ByName>(var.GetName(), var) ? Res::Ok() : Res::Err("can't write to DB");
+    if (var.IsEmpty()) {
+        EraseBy<ByName>(var.GetName());
+    } else {
+        WriteBy<ByName>(var.GetName(), var);
+    }
+    return Res::Ok();
 }
 
 std::shared_ptr<GovVariable> CGovView::GetVariable(std::string const & name) const
@@ -23,7 +28,7 @@ std::shared_ptr<GovVariable> CGovView::GetVariable(std::string const & name) con
     auto var = GovVariable::Create(name);
     if (var) {
         /// @todo empty or NO variable??
-        ReadBy<ByName>(std::string(var->GetName()), *var);
+        ReadBy<ByName>(var->GetName(), *var);
         return var;
     }
     return {};

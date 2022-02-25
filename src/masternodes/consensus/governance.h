@@ -8,6 +8,7 @@
 #include <masternodes/consensus/txvisitor.h>
 
 struct CGovernanceMessage;
+struct CGovernanceUnsetMessage;
 struct CGovernanceHeightMessage;
 
 class CGovernanceConsensus : public CCustomTxVisitor {
@@ -15,6 +16,7 @@ class CGovernanceConsensus : public CCustomTxVisitor {
 public:
     using CCustomTxVisitor::CCustomTxVisitor;
     Res operator()(const CGovernanceMessage& obj) const;
+    Res operator()(const CGovernanceUnsetMessage& obj) const;
     Res operator()(const CGovernanceHeightMessage& obj) const;
 };
 

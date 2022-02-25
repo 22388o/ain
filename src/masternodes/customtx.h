@@ -52,6 +52,7 @@ enum CustomTxType : uint8_t
 
     // governance
     SetGovVariable          = 'G',
+    UnsetGovVariable        = 'E',
     SetGovVariableHeight    = 'j',
 
     // Auto auth
